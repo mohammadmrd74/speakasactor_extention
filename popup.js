@@ -4,9 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const scoreElement = document.getElementById("score");
 
     // Load saved settings from Chrome storage
-    chrome.storage.sync.get(["isActive", "language"], (data) => {
+    chrome.storage.sync.get(["isActive", "language", "score"], (data) => {
+        console.log(data.score);
+        
         toggleSwitch.checked = data.isActive ?? false;
         languageSelect.value = data.language ?? "en";
+        scoreElement.textContent = Math.floor(data.score) ?? 0;
     });
 
     // Save settings when changed
@@ -22,20 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        chrome.storage.sync.get("score", (data) => {
+            scoreElement.textContent = data.score ?? 0;
+        })
+    });
+
     languageSelect.addEventListener("change", () => {
         chrome.storage.sync.set({ language: languageSelect.value });
     });
-
-    // Fetch user score from API
-    // async function fetchScore() {
-    //     try {
-    //         const response = await fetch("https://your-api.com/user-score");
-    //         const data = await response.json();
-    //         scoreElement.textContent = data.score ?? "N/A";
-    //     } catch (error) {
-    //         scoreElement.textContent = "Error";
-    //     }
-    // }
-
-    // fetchScore();
 });
