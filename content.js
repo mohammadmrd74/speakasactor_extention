@@ -1,13 +1,16 @@
 console.log("YouTube Subtitle Listener Loaded!");
 var levenshtein = window.Levenshtein;
 let video = document.querySelector("video");
-let text = "";
 let userText = "";
+let warningText = "";
 let lastSubtitle = "";
 let say = "";
 let subtitleInterval;
 let userScore = 0;
 let isListening = false;
+let currentLang = "en-US";
+let isActive = true;
+let incorrectCount = 0;
 
 function createModal() {
   let modal = document.createElement("div");
@@ -35,9 +38,10 @@ function showModal() {
     modal.style.display = "block";
     modal.innerHTML = `
       <p>Speak Now!</p>
-      <p>${text}</p>
+      <p>${lastSubtitle}</p>
       <p style="margin-top:10px">what you said: ${userText}</p>
       <div>score: ${userScore}</div>
+      <div style="margin-top:10px;color:red;">${warningText}</div>
   `;
   }
 }
@@ -49,36 +53,40 @@ function closeModal() {
   }
 }
 
+function waitFor(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 
-function getSubtitles() {
+async function getSubtitles() {
   if (isListening) return;
   if (!video) {
     console.log('video not loaded yet!');
     video = document.querySelector("video");
   };
-
-
-  clearInterval(subtitleInterval);
-  let intervalId = setInterval(() => {
-    const subtitleElements = document.querySelectorAll(".ytp-caption-segment");
-    text = Array.from(subtitleElements).map(el => el.innerText.trim()).join(" ");
-    let similarityScore = findSimilarity(text, lastSubtitle);
-    console.log('text', text);
-    console.log("lastSubtitle", lastSubtitle);
-
-    if (similarityScore < 0.5) {
-      if (text && text.length > 20) {
-
-        clearInterval(intervalId);
-        lastSubtitle = text;
+  const subtitleElements = document.querySelectorAll(".ytp-caption-segment");
+  let text = Array.from(subtitleElements).map(el => el.innerText.trim()).join(" ");
+  if (text) {
+    clearInterval(subtitleInterval);
+    lastSubtitle = "";
+    while (true) {
+      const subtitleElements = document.querySelectorAll(".ytp-caption-segment");
+      text = Array.from(subtitleElements).map(el => el.innerText.trim()).join(" ");
+      let similarityScore = findSimilarity(text, lastSubtitle);
+      console.log('text', text);
+      console.log("lastSubtitle", lastSubtitle);
+      if (lastSubtitle && similarityScore < 0.65) {
+        console.log("lastSubtitle", lastSubtitle);
         video.pause();
         showModal();
-        startSpeechRecognition(text);
+        startSpeechRecognition(lastSubtitle);
+        break;
       }
 
+      lastSubtitle = text;
+      await waitFor(500);
     }
-  }, 500);
+  }
 }
 
 function findSimilarity(spokenText, expectedText) {
@@ -87,17 +95,20 @@ function findSimilarity(spokenText, expectedText) {
   return 1 - distance / maxLen;
 }
 
-function startSpeechRecognition(expectedText) {
+function startSpeechRecognition(expectedText, repeat = 0) {
   isListening = true;
   clearInterval(subtitleInterval);
 
   const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
-  recognition.lang = "en-US";
+  recognition.lang = currentLang;
   recognition.continuous = false;
   recognition.interimResults = false;
-  userText = ""
-  userScore = 0;
-  showModal();
+  if (!repeat) {
+    userText = ""
+    warningText = ""
+    userScore = 0;
+    showModal();
+  }
 
   recognition.onresult = (event) => {
 
@@ -106,17 +117,40 @@ function startSpeechRecognition(expectedText) {
     userText = spokenText;
     let similarity = findSimilarity(spokenText, expectedText);
     userScore = Math.ceil(similarity * 10);
-    chrome.storage.sync.get("score", (data) => {
+    chrome.storage.sync.get(["score"], (data) => {
+      if (chrome.runtime.lastError) {
+        console.error("Storage error:", chrome.runtime.lastError);
+        return;
+      }
+
+      let currentScore = data.score || 0; // Default to 0 if score is not set
+      let newScore = parseFloat(currentScore) + parseFloat(userScore) * 10;
+
       chrome.storage.sync.set({
-        score: data.score || data.score === 0 ? parseFloat(data.score) + parseFloat(userScore) * 10 : 0
+        score: newScore
+      }, () => {
+        if (chrome.runtime.lastError) {
+          console.error("Storage error:", chrome.runtime.lastError);
+        } else {
+          console.log("Score updated:", newScore);
+        }
       });
     });
     showModal();
     if (similarity >= 0.8) {
       console.log("✅ Correct! Resuming...");
+      incorrectCount = 0;
+      warningText = "";
     } else {
-      console.log("❌ Incorrect. Keep speaking...");
+      if (!incorrectCount) {
+        warningText = "Incorrect. Repeat"
+      } else {
+        warningText = "Incorrect. video countiunes"
+      }
+      incorrectCount += 1;
+
     }
+    showModal();
     recognition.abort();
   };
 
@@ -129,12 +163,18 @@ function startSpeechRecognition(expectedText) {
   };
 
   recognition.onend = () => {
-    setTimeout(() => {
-      isListening = false;
-      closeModal();
-      video.play();
-      subtitleInterval = setInterval(getSubtitles, 5000);
-    }, 4000);
+    if (isActive && incorrectCount !== 1) {
+      setTimeout(() => {
+        isListening = false;
+        closeModal();
+        video.play();
+        subtitleInterval = setInterval(getSubtitles, 5000);
+      }, 2000);
+    } else {
+      console.log("REPEAT");
+
+      startSpeechRecognition(expectedText, 1)
+    }
   };
 
   recognition.start();
@@ -143,7 +183,14 @@ function startSpeechRecognition(expectedText) {
 // Start checking subtitles initially
 chrome.storage.sync.get("isActive", (data) => {
   if (data.isActive) {
-    subtitleInterval = setInterval(getSubtitles, 5000);
+    chrome.storage.sync.get("language", (data) => {
+      console.log("data.language", data.language);
+
+      if (data.language) {
+        currentLang = data.language
+      }
+      subtitleInterval = setInterval(getSubtitles, 5000);
+    });
   } else {
     clearInterval(subtitleInterval);
     console.log("Extension is inactive, not running script.");
@@ -153,12 +200,20 @@ chrome.storage.sync.get("isActive", (data) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "toggleActive") {
     console.log("Toggle state changed:", message.isActive);
+    isActive = message.isActive;
     if (message.isActive) {
       subtitleInterval = setInterval(getSubtitles, 5000);
     } else {
       clearInterval(subtitleInterval);
       console.log("Extension turned off, stopping script.");
     }
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "languageSelect") {
+    console.log("languageSelect state changed:", message.language);
+    currentLang = message.language
   }
 });
 createModal();

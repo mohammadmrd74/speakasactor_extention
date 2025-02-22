@@ -5,10 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load saved settings from Chrome storage
     chrome.storage.sync.get(["isActive", "language", "score"], (data) => {
-        console.log(data.score);
-        
+   
         toggleSwitch.checked = data.isActive ?? false;
-        languageSelect.value = data.language ?? "en";
+        languageSelect.value = data.language ?? "en-US";
         scoreElement.textContent = Math.floor(data.score) ?? 0;
     });
 
@@ -21,6 +20,18 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0]?.id) {
                 chrome.tabs.sendMessage(tabs[0].id, { action: "toggleActive", isActive });
+            }
+        });
+    });
+    // Save settings when changed
+    languageSelect.addEventListener("change", () => {
+        const language = languageSelect.value;
+        chrome.storage.sync.set({ language });
+
+        // Send message to content.js
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, { action: "languageSelect", language });
             }
         });
     });
