@@ -11,45 +11,39 @@ let isListening = false;
 let currentLang = "en-US";
 let isActive = true;
 let incorrectCount = 0;
-let button = "";
-let lastProcessedSentence = "";
-let lastSubtitleTime = 0;
-let lastStableText = "";
-let pendingComplete = null;
+let button = '';
 
 function createModal() {
   let modal = document.createElement("div");
   modal.id = "speakasactor_modal";
-
+  
   // Modern modal styling
   Object.assign(modal.style, {
     position: "fixed",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    background:
-      "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)",
+    background: "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)",
     backdropFilter: "blur(20px)",
     WebkitBackdropFilter: "blur(20px)",
     color: "#333",
     padding: "32px",
     borderRadius: "20px",
     fontSize: "16px",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
     zIndex: "999999",
     display: "none",
     boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2)",
     minWidth: "400px",
     maxWidth: "500px",
     border: "1px solid rgba(255,255,255,0.3)",
-    animation: "modalSlideIn 0.3s ease-out",
+    animation: "modalSlideIn 0.3s ease-out"
   });
 
   // Add animation keyframes
-  if (!document.getElementById("speakasactor-styles")) {
-    const style = document.createElement("style");
-    style.id = "speakasactor-styles";
+  if (!document.getElementById('speakasactor-styles')) {
+    const style = document.createElement('style');
+    style.id = 'speakasactor-styles';
     style.textContent = `
       @keyframes modalSlideIn {
         0% {
@@ -131,9 +125,7 @@ function showModal() {
         ">${lastSubtitle}</div>
       </div>
 
-      ${
-        userText
-          ? `
+      ${userText ? `
         <div style="
           background: rgba(255,255,255,0.7);
           border: 2px dashed rgba(102, 126, 234, 0.3);
@@ -155,13 +147,9 @@ function showModal() {
             line-height: 1.4;
           ">${userText}</div>
         </div>
-      `
-          : ""
-      }
+      ` : ''}
 
-      ${
-        userScore > 0
-          ? `
+      ${userScore > 0 ? `
         <div style="
           background: linear-gradient(135deg, #10b981 0%, #059669 100%);
           color: white;
@@ -183,13 +171,9 @@ function showModal() {
             font-weight: 700;
           ">${userScore}/10</div>
         </div>
-      `
-          : ""
-      }
+      ` : ''}
 
-      ${
-        warningText
-          ? `
+      ${warningText ? `
         <div style="
           background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
@@ -206,9 +190,7 @@ function showModal() {
           <span style="font-size: 16px;">⚠️</span>
           <span style="font-weight: 500;">${warningText}</span>
         </div>
-      `
-          : ""
-      }
+      ` : ''}
     `;
   }
 }
@@ -222,7 +204,7 @@ function showButton() {
       display: "flex",
       flexDirection: "column",
       gap: "16px",
-      marginTop: "20px",
+      marginTop: "20px"
     });
 
     // Create secondary buttons container
@@ -230,7 +212,7 @@ function showButton() {
     Object.assign(secondaryButtonsContainer.style, {
       display: "flex",
       gap: "12px",
-      justifyContent: "center",
+      justifyContent: "center"
     });
 
     // Continue button container with hint
@@ -240,7 +222,7 @@ function showButton() {
       flexDirection: "column",
       alignItems: "center",
       gap: "8px",
-      width: "100%",
+      width: "100%"
     });
 
     // Continue button
@@ -255,8 +237,7 @@ function showButton() {
       cursor: "pointer",
       fontSize: "18px",
       fontWeight: "700",
-      fontFamily:
-        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
       boxShadow: "0 4px 15px rgba(79, 172, 254, 0.4)",
       transition: "all 0.2s ease",
       display: "flex",
@@ -264,17 +245,16 @@ function showButton() {
       justifyContent: "center",
       gap: "8px",
       width: "100%",
-      minHeight: "54px",
+      minHeight: "54px"
     });
 
     // Space key hint
     const spaceHint = document.createElement("div");
-    spaceHint.innerHTML = "or press <kbd>Enter</kbd>";
+    spaceHint.innerHTML = "or press <kbd>Space</kbd>";
     Object.assign(spaceHint.style, {
       fontSize: "14px",
       color: "#666",
-      fontFamily:
-        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif"
     });
 
     // Style the kbd element
@@ -296,8 +276,8 @@ function showButton() {
         white-space: nowrap;
       }
     `;
-    if (!document.getElementById("kbd-styles")) {
-      kbdStyle.id = "kbd-styles";
+    if (!document.getElementById('kbd-styles')) {
+      kbdStyle.id = 'kbd-styles';
       document.head.appendChild(kbdStyle);
     }
 
@@ -313,24 +293,24 @@ function showButton() {
 
     function startVideo() {
       video.play();
-      subtitleInterval = setInterval(getSubtitles, 2000);
+      subtitleInterval = setInterval(getSubtitles, 5000);
       modal.style.display = "none";
       buttonContainer.remove();
     }
 
     button.onclick = startVideo;
 
-    // Add enter key listener for continue button
-    const enterKeyListener = (event) => {
-      if (event.code === "Enter" && modal.style.display === "block") {
+    // Add space key listener for continue button
+    const spaceKeyListener = (event) => {
+      if (event.code === 'Space' && modal.style.display === 'block') {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
         startVideo();
-        document.removeEventListener("keydown", enterKeyListener);
+        document.removeEventListener('keydown', spaceKeyListener);
       }
     };
-    document.addEventListener("keydown", enterKeyListener, true);
+    document.addEventListener('keydown', spaceKeyListener, true);
 
     // Translate button
     const translateButton = document.createElement("button");
@@ -344,12 +324,11 @@ function showButton() {
       fontWeight: "600",
       color: "#667eea",
       cursor: "pointer",
-      fontFamily:
-        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
       transition: "all 0.2s ease",
       display: "flex",
       alignItems: "center",
-      gap: "8px",
+      gap: "8px"
     });
 
     // Hover effects for translate button
@@ -380,26 +359,23 @@ function showButton() {
       fontWeight: "600",
       color: "white",
       cursor: "pointer",
-      fontFamily:
-        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
       transition: "all 0.2s ease",
       display: "flex",
       alignItems: "center",
       gap: "8px",
-      boxShadow: "0 4px 12px rgba(243, 156, 18, 0.3)",
+      boxShadow: "0 4px 12px rgba(243, 156, 18, 0.3)"
     });
 
     // Hover effects for save button
     saveButton.onmouseover = () => {
       saveButton.style.transform = "translateY(-2px)";
-      saveButton.style.background =
-        "linear-gradient(135deg, #e67e22 0%, #d35400 100%)";
+      saveButton.style.background = "linear-gradient(135deg, #e67e22 0%, #d35400 100%)";
       saveButton.style.boxShadow = "0 6px 20px rgba(243, 156, 18, 0.5)";
     };
     saveButton.onmouseout = () => {
       saveButton.style.transform = "translateY(0)";
-      saveButton.style.background =
-        "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)";
+      saveButton.style.background = "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)";
       saveButton.style.boxShadow = "0 4px 12px rgba(243, 156, 18, 0.3)";
     };
 
@@ -408,23 +384,21 @@ function showButton() {
       const translationDiv = document.getElementById("translation-display");
       let translation = null;
       if (translationDiv) {
-        const translationText = translationDiv.querySelector("div:last-child");
+        const translationText = translationDiv.querySelector('div:last-child');
         if (translationText) {
           translation = translationText.textContent;
         }
       }
-
+      
       saveDifficultText(lastSubtitle, translation);
       saveButton.innerHTML = "✅ Saved";
-      saveButton.style.background =
-        "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+      saveButton.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
       saveButton.style.borderColor = "#10b981";
       saveButton.style.color = "white";
       saveButton.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
       setTimeout(() => {
         saveButton.innerHTML = "📚 Save";
-        saveButton.style.background =
-          "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)";
+        saveButton.style.background = "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)";
         saveButton.style.borderColor = "#e67e22";
         saveButton.style.color = "white";
         saveButton.style.boxShadow = "0 4px 12px rgba(243, 156, 18, 0.3)";
@@ -434,11 +408,11 @@ function showButton() {
     // Append button and hint to continue container
     continueContainer.appendChild(button);
     continueContainer.appendChild(spaceHint);
-
+    
     // Add secondary buttons to their container
     secondaryButtonsContainer.appendChild(translateButton);
     secondaryButtonsContainer.appendChild(saveButton);
-
+    
     // Add containers to main button container
     buttonContainer.appendChild(continueContainer);
     buttonContainer.appendChild(secondaryButtonsContainer);
@@ -454,12 +428,12 @@ async function showInlineTranslation(text, button) {
   try {
     // First try MyMemory API (free, no key required)
     const translation = await translateText(text);
-
+    
     if (translation) {
       // Create translation display
       const modal = document.getElementById("speakasactor_modal");
       let translationDiv = document.getElementById("translation-display");
-
+      
       if (!translationDiv) {
         translationDiv = document.createElement("div");
         translationDiv.id = "translation-display";
@@ -470,11 +444,11 @@ async function showInlineTranslation(text, button) {
           borderRadius: "12px",
           marginBottom: "16px",
           marginTop: "16px",
-          boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+          boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"
         });
         modal.appendChild(translationDiv);
       }
-
+      
       translationDiv.innerHTML = `
         <div style="
           font-size: 12px;
@@ -488,7 +462,7 @@ async function showInlineTranslation(text, button) {
           line-height: 1.4;
         ">${translation}</div>
       `;
-
+      
       button.innerHTML = "✅ Translated";
       setTimeout(() => {
         button.innerHTML = originalHTML;
@@ -511,19 +485,12 @@ async function translateText(text) {
   try {
     // Method 1: Try MyMemory with selected language
     const sourceLanguage = detectLanguageForAPI(text);
-    if (sourceLanguage && sourceLanguage !== "en") {
+    if (sourceLanguage && sourceLanguage !== 'en') {
       try {
-        const myMemoryResponse = await fetch(
-          `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
-            text
-          )}&langpair=${sourceLanguage}|en`
-        );
+        const myMemoryResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLanguage}|en`);
         const myMemoryData = await myMemoryResponse.json();
-
-        if (
-          myMemoryData.responseStatus === 200 &&
-          myMemoryData.responseData?.translatedText
-        ) {
+        
+        if (myMemoryData.responseStatus === 200 && myMemoryData.responseData?.translatedText) {
           const translation = myMemoryData.responseData.translatedText;
           if (translation !== text) {
             return translation;
@@ -533,15 +500,11 @@ async function translateText(text) {
         console.log("MyMemory failed, trying next method");
       }
     }
-
+    
     // Method 2: Dictionary lookup for single words
-    if (text.split(" ").length === 1) {
+    if (text.split(' ').length === 1) {
       try {
-        const dictResponse = await fetch(
-          `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(
-            text
-          )}`
-        );
+        const dictResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(text)}`);
         if (dictResponse.ok) {
           const dictData = await dictResponse.json();
           if (dictData[0]?.meanings?.[0]?.definitions?.[0]?.definition) {
@@ -558,7 +521,7 @@ async function translateText(text) {
     if (simpleTranslation) {
       return simpleTranslation;
     }
-
+    
     return "Translation not available";
   } catch (error) {
     console.error("Translation API error:", error);
@@ -570,312 +533,108 @@ function detectLanguageForAPI(text) {
   // Use the currently selected language from dropdown
   // Map dropdown language codes to API-compatible codes
   const apiLangMap = {
-    "en-US": "en",
-    "en-GB": "en",
-    "de-DE": "de",
-    "es-ES": "es",
-    "fr-FR": "fr",
-    "it-IT": "it",
-    "pt-PT": "pt",
-    "ja-JP": "ja",
-    "ko-KR": "ko",
-    "zh-CN": "zh",
+    'en-US': 'en',
+    'en-GB': 'en',
+    'de-DE': 'de',
+    'es-ES': 'es',
+    'fr-FR': 'fr',
+    'it-IT': 'it',
+    'pt-PT': 'pt',
+    'ja-JP': 'ja',
+    'ko-KR': 'ko',
+    'zh-CN': 'zh'
   };
-  return apiLangMap[currentLang] || "en";
+  return apiLangMap[currentLang] || 'en';
 }
 
 function detectLanguage(text) {
   // Simple language detection based on common patterns
   const commonWords = {
-    es: [
-      "el",
-      "la",
-      "de",
-      "que",
-      "y",
-      "es",
-      "en",
-      "un",
-      "se",
-      "no",
-      "te",
-      "lo",
-      "le",
-      "da",
-      "su",
-      "por",
-      "son",
-      "con",
-      "para",
-      "una",
-      "sur",
-      "también",
-    ],
-    fr: [
-      "le",
-      "de",
-      "et",
-      "à",
-      "un",
-      "il",
-      "être",
-      "et",
-      "en",
-      "avoir",
-      "que",
-      "pour",
-      "dans",
-      "ce",
-      "son",
-      "une",
-      "sur",
-      "avec",
-      "ne",
-      "se",
-      "pas",
-      "tout",
-      "plus",
-      "par",
-    ],
-    de: [
-      "der",
-      "die",
-      "und",
-      "in",
-      "den",
-      "von",
-      "zu",
-      "das",
-      "mit",
-      "sich",
-      "des",
-      "auf",
-      "für",
-      "ist",
-      "im",
-      "dem",
-      "nicht",
-      "ein",
-      "eine",
-      "als",
-      "auch",
-      "es",
-      "an",
-    ],
-    it: [
-      "il",
-      "di",
-      "che",
-      "e",
-      "la",
-      "per",
-      "un",
-      "in",
-      "con",
-      "del",
-      "da",
-      "a",
-      "al",
-      "le",
-      "si",
-      "dei",
-      "sul",
-      "una",
-      "sono",
-      "della",
-      "nel",
-      "alla",
-    ],
-    pt: [
-      "de",
-      "a",
-      "o",
-      "que",
-      "e",
-      "do",
-      "da",
-      "em",
-      "um",
-      "para",
-      "é",
-      "com",
-      "não",
-      "uma",
-      "os",
-      "no",
-      "se",
-      "na",
-      "por",
-      "mais",
-      "as",
-      "dos",
-    ],
-    ja: [
-      "の",
-      "に",
-      "は",
-      "を",
-      "た",
-      "が",
-      "で",
-      "て",
-      "と",
-      "し",
-      "れ",
-      "さ",
-      "ある",
-      "いる",
-      "も",
-      "する",
-      "から",
-      "な",
-      "こと",
-      "として",
-    ],
-    ko: [
-      "이",
-      "그",
-      "에",
-      "의",
-      "는",
-      "로",
-      "을",
-      "와",
-      "한",
-      "하다",
-      "있다",
-      "되다",
-      "수",
-      "없다",
-      "않다",
-      "같다",
-      "것",
-      "들",
-      "많다",
-      "크다",
-    ],
-    zh: [
-      "的",
-      "了",
-      "在",
-      "是",
-      "我",
-      "有",
-      "和",
-      "就",
-      "不",
-      "人",
-      "都",
-      "一",
-      "一个",
-      "上",
-      "也",
-      "很",
-      "到",
-      "说",
-      "要",
-      "去",
-    ],
-    ru: [
-      "в",
-      "и",
-      "не",
-      "на",
-      "я",
-      "быть",
-      "он",
-      "с",
-      "что",
-      "а",
-      "по",
-      "это",
-      "она",
-      "этот",
-      "к",
-      "но",
-      "они",
-      "мы",
-      "как",
-      "из",
-    ],
+    'es': ['el', 'la', 'de', 'que', 'y', 'es', 'en', 'un', 'se', 'no', 'te', 'lo', 'le', 'da', 'su', 'por', 'son', 'con', 'para', 'una', 'sur', 'también'],
+    'fr': ['le', 'de', 'et', 'à', 'un', 'il', 'être', 'et', 'en', 'avoir', 'que', 'pour', 'dans', 'ce', 'son', 'une', 'sur', 'avec', 'ne', 'se', 'pas', 'tout', 'plus', 'par'],
+    'de': ['der', 'die', 'und', 'in', 'den', 'von', 'zu', 'das', 'mit', 'sich', 'des', 'auf', 'für', 'ist', 'im', 'dem', 'nicht', 'ein', 'eine', 'als', 'auch', 'es', 'an'],
+    'it': ['il', 'di', 'che', 'e', 'la', 'per', 'un', 'in', 'con', 'del', 'da', 'a', 'al', 'le', 'si', 'dei', 'sul', 'una', 'sono', 'della', 'nel', 'alla'],
+    'pt': ['de', 'a', 'o', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não', 'uma', 'os', 'no', 'se', 'na', 'por', 'mais', 'as', 'dos'],
+    'ja': ['の', 'に', 'は', 'を', 'た', 'が', 'で', 'て', 'と', 'し', 'れ', 'さ', 'ある', 'いる', 'も', 'する', 'から', 'な', 'こと', 'として'],
+    'ko': ['이', '그', '에', '의', '는', '로', '을', '와', '한', '하다', '있다', '되다', '수', '없다', '않다', '같다', '것', '들', '많다', '크다'],
+    'zh': ['的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去'],
+    'ru': ['в', 'и', 'не', 'на', 'я', 'быть', 'он', 'с', 'что', 'а', 'по', 'это', 'она', 'этот', 'к', 'но', 'они', 'мы', 'как', 'из']
   };
-
+  
   const words = text.toLowerCase().split(/\s+/);
   let maxMatches = 0;
   let detectedLang = null;
-
+  
   for (const [lang, commonList] of Object.entries(commonWords)) {
-    const matches = words.filter((word) => commonList.includes(word)).length;
+    const matches = words.filter(word => commonList.includes(word)).length;
     if (matches > maxMatches && matches > 0) {
       maxMatches = matches;
       detectedLang = lang;
     }
   }
-
+  
   // If no language detected or text is likely English, return null
   if (!detectedLang || /^[a-zA-Z\s.,!?'"]+$/.test(text)) {
     return null;
   }
-
+  
   return detectedLang;
 }
 
 function getSimpleTranslation(text) {
   // Basic phrase translations for common expressions
   const simpleTranslations = {
-    hola: "hello",
-    gracias: "thank you",
-    "por favor": "please",
-    "lo siento": "I am sorry",
-    bonjour: "hello",
-    merci: "thank you",
-    "s'il vous plaît": "please",
-    "je suis désolé": "I am sorry",
-    "guten tag": "good day",
-    danke: "thank you",
-    bitte: "please",
-    entschuldigung: "excuse me",
-    ciao: "hello",
-    grazie: "thank you",
-    prego: "please",
-    scusa: "excuse me",
-    こんにちは: "hello",
-    ありがとう: "thank you",
-    すみません: "excuse me",
-    안녕하세요: "hello",
-    감사합니다: "thank you",
-    죄송합니다: "I am sorry",
+    'hola': 'hello',
+    'gracias': 'thank you',
+    'por favor': 'please',
+    'lo siento': 'I am sorry',
+    'bonjour': 'hello',
+    'merci': 'thank you',
+    's\'il vous plaît': 'please',
+    'je suis désolé': 'I am sorry',
+    'guten tag': 'good day',
+    'danke': 'thank you',
+    'bitte': 'please',
+    'entschuldigung': 'excuse me',
+    'ciao': 'hello',
+    'grazie': 'thank you',
+    'prego': 'please',
+    'scusa': 'excuse me',
+    'こんにちは': 'hello',
+    'ありがとう': 'thank you',
+    'すみません': 'excuse me',
+    '안녕하세요': 'hello',
+    '감사합니다': 'thank you',
+    '죄송합니다': 'I am sorry'
   };
-
+  
   const lowerText = text.toLowerCase().trim();
   return simpleTranslations[lowerText] || null;
 }
 
 function saveDifficultText(text, translation = null) {
   const timestamp = new Date().toISOString();
-  const videoTitle =
-    document.querySelector("h1.ytd-video-primary-info-renderer")?.textContent ||
-    "Unknown Video";
+  const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent || 'Unknown Video';
   const videoUrl = window.location.href;
-
+  
   const difficultText = {
     text: text,
     translation: translation,
     timestamp: timestamp,
     videoTitle: videoTitle,
     videoUrl: videoUrl,
-    language: currentLang,
+    language: currentLang
   };
 
-  chrome.storage.sync.get(["difficultTexts"], (data) => {
+  chrome.storage.sync.get(['difficultTexts'], (data) => {
     const difficultTexts = data.difficultTexts || [];
     difficultTexts.push(difficultText);
-
+    
     // Keep only the last 100 entries to avoid storage limits
     if (difficultTexts.length > 100) {
       difficultTexts.splice(0, difficultTexts.length - 100);
     }
-
+    
     chrome.storage.sync.set({ difficultTexts }, () => {
       if (chrome.runtime.lastError) {
         console.error("Storage error:", chrome.runtime.lastError);
@@ -894,62 +653,40 @@ function closeModal() {
 }
 
 function waitFor(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function isSentenceComplete(text) {
-  if (!text || text.length < 8) return false;
-
-  const trimmedText = text.trim();
-  const wordCount = trimmedText.split(/\s+/).length;
-
-  // Must have at least 6 words to be considered complete
-  if (wordCount < 6) return false;
-
-  // Strong indicators of completion (with minimum word requirement)
-  const sentenceEndings = /[.!?]\s*$/;
-  if (sentenceEndings.test(trimmedText) && wordCount >= 6) return true;
-
-  // Only trigger on very long sentences as a safety net
-  if (wordCount >= 20) return true;
-
-  return false;
-}
 
 async function getSubtitles() {
   if (isListening) return;
   if (!video) {
-    console.log("video not loaded yet!");
+    console.log('video not loaded yet!');
     video = document.querySelector("video");
-  }
-
+  };
   const subtitleElements = document.querySelectorAll(".ytp-caption-segment");
-  let text = Array.from(subtitleElements)
-    .map((el) => el.innerText.trim())
-    .join(" ");
-    
-  if (text && text.length > 3) {
-    text = text.replace(/–/g, "").trim();
-    
-    // Check if sentence has more than 2 words
-    const wordCount = text.split(/\s+/).length;
-    
-    // Check if subtitle has changed from the last one and has enough words
-    if (text !== lastProcessedSentence && wordCount > 2) {
-      lastProcessedSentence = text;
-      clearInterval(subtitleInterval);
-      video.pause();
-      showModal();
-      startSpeechRecognition(text);
+  let text = Array.from(subtitleElements).map(el => el.innerText.trim()).join(" ");
+  if (text && text.length > 9) {
+    clearInterval(subtitleInterval);
+    lastSubtitle = "";
+    while (true) {
+      const subtitleElements = document.querySelectorAll(".ytp-caption-segment");
+      text = Array.from(subtitleElements).map(el => el.innerText.trim()).join(" ");
+      let similarityScore = findSimilarity(text, lastSubtitle);
+      if (lastSubtitle && similarityScore < 0.65) {
+        video.pause();
+        showModal();
+        startSpeechRecognition(lastSubtitle);
+        break;
+      }
+
+      lastSubtitle = text.replace(/–/g, "");
+      await waitFor(500);
     }
   }
 }
 
 function findSimilarity(spokenText, expectedText) {
-  let distance = levenshtein.get(
-    spokenText.toLowerCase(),
-    expectedText.toLowerCase()
-  );
+  let distance = levenshtein.get(spokenText.toLowerCase(), expectedText.toLowerCase());
   let maxLen = Math.max(spokenText.length, expectedText.length);
   return 1 - distance / maxLen;
 }
@@ -958,23 +695,21 @@ function startSpeechRecognition(expectedText, repeat = 0) {
   isListening = true;
   clearInterval(subtitleInterval);
 
-  // Store the expected text for display in modal
-  lastSubtitle = expectedText;
-
   const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
   recognition.lang = currentLang;
   recognition.continuous = false;
   recognition.interimResults = false;
   if (!repeat) {
-    userText = "";
-    warningText = "";
+    userText = ""
+    warningText = ""
     userScore = 0;
     showModal();
   }
 
   recognition.onresult = (event) => {
-    let spokenText =
-      event.results[event.results.length - 1][0].transcript.trim();
+
+
+    let spokenText = event.results[event.results.length - 1][0].transcript.trim();
     userText = spokenText;
     let similarity = findSimilarity(spokenText, expectedText);
     userScore = Math.ceil(similarity * 10);
@@ -987,31 +722,29 @@ function startSpeechRecognition(expectedText, repeat = 0) {
       let currentScore = data.score || 0; // Default to 0 if score is not set
       let newScore = parseFloat(currentScore) + parseFloat(userScore);
 
-      chrome.storage.sync.set(
-        {
-          score: newScore,
-        },
-        () => {
-          if (chrome.runtime.lastError) {
-            console.error("Storage error:", chrome.runtime.lastError);
-          } else {
-            console.log("Score updated:", newScore);
-          }
+      chrome.storage.sync.set({
+        score: newScore
+      }, () => {
+        if (chrome.runtime.lastError) {
+          console.error("Storage error:", chrome.runtime.lastError);
+        } else {
+          console.log("Score updated:", newScore);
         }
-      );
+      });
     });
     showModal();
-    if (similarity >= 0.5) {
+    if (similarity >= 0.7) {
       console.log("✅ Correct! Resuming...");
       incorrectCount = 0;
       warningText = "";
     } else {
       if (!incorrectCount) {
-        warningText = "Incorrect. Repeat";
+        warningText = "Incorrect. Repeat"
       } else {
-        warningText = "Incorrect. video countiunes";
+        warningText = "Incorrect. video countiunes"
       }
       incorrectCount += 1;
+
     }
     showModal();
     recognition.abort();
@@ -1037,7 +770,7 @@ function startSpeechRecognition(expectedText, repeat = 0) {
     } else {
       console.log("REPEAT");
 
-      startSpeechRecognition(expectedText, 1);
+      startSpeechRecognition(expectedText, 1)
     }
   };
 
@@ -1051,9 +784,9 @@ chrome.storage.sync.get("isActive", (data) => {
       console.log("data.language", data.language);
 
       if (data.language) {
-        currentLang = data.language;
+        currentLang = data.language
       }
-      subtitleInterval = setInterval(getSubtitles, 2000);
+      subtitleInterval = setInterval(getSubtitles, 5000);
     });
   } else {
     clearInterval(subtitleInterval);
@@ -1066,7 +799,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Toggle state changed:", message.isActive);
     isActive = message.isActive;
     if (message.isActive) {
-      subtitleInterval = setInterval(getSubtitles, 500);
+      subtitleInterval = setInterval(getSubtitles, 5000);
     } else {
       clearInterval(subtitleInterval);
       console.log("Extension turned off, stopping script.");
@@ -1077,18 +810,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "languageSelect") {
     console.log("languageSelect state changed:", message.language);
-    currentLang = message.language;
+    currentLang = message.language
   }
 });
 createModal();
 setTimeout(() => {
-  const captionsButton = document.querySelector(
-    ".ytp-subtitles-button.ytp-button"
-  );
-  if (
-    captionsButton &&
-    captionsButton.getAttribute("aria-pressed") === "false"
-  ) {
+  const captionsButton = document.querySelector(".ytp-subtitles-button.ytp-button");
+  if (captionsButton && captionsButton.getAttribute("aria-pressed") === "false") {
     captionsButton.click();
   }
 }, 1500);
